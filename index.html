@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html>
 <head>
@@ -18,12 +17,15 @@
         
         #sidebar {
             width: 350px;
+            min-width: 350px; /* Stellt sicher, dass die Sidebar auf Desktops diese Breite hat */
             background-color: #f8f9fa;
             border-right: 1px solid #ddd;
             display: flex;
             flex-direction: column;
             box-shadow: 2px 0 5px rgba(0,0,0,0.1);
             z-index: 1000;
+            /* Übergang für sanftes Ein-/Ausblenden */
+            transition: transform 0.3s ease-out;
         }
         
         #map {
@@ -104,11 +106,65 @@
         }
         .legend-item { display: flex; align-items: center; margin-bottom: 5px; }
         .color-box { width: 20px; height: 20px; margin-right: 10px; opacity: 0.7; }
+
+
+        /* NEUE CSS FÜR RESPONSIVE DARSTELLUNG */
+        
+        /* Sidebar Toggle Button (Standardmäßig versteckt) */
+        #sidebar-toggle {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            z-index: 1001; /* Über der Karte und Sidebar */
+            background-color: #2c3e50;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            cursor: pointer;
+            border-radius: 5px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+            display: none; /* Auf Desktops standardmäßig ausblenden */
+        }
+
+        /* Media Query für kleine Bildschirme (max. 768px Breite - typische Tablet- oder Handy-Ansicht) */
+        @media (max-width: 768px) {
+            #sidebar-toggle {
+                display: block; /* Button auf Mobilgeräten anzeigen */
+            }
+
+            #sidebar {
+                position: absolute;
+                top: 0;
+                left: 0;
+                height: 100%;
+                width: 80vw; /* Nimmt 80% der Viewport-Breite ein */
+                min-width: 0;
+                transform: translateX(-100%); /* Sidebar standardmäßig nach links aus dem Bildschirm schieben */
+            }
+            
+            /* Klasse, die per JS hinzugefügt wird, um die Sidebar anzuzeigen */
+            #sidebar.open {
+                transform: translateX(0);
+            }
+
+            #container {
+                display: block; /* Flex-Layout auf Mobilgeräten aufheben */
+            }
+
+            #map {
+                width: 100%;
+            }
+        }
     </style>
 </head>
 <body>
 
 <div id="container">
+    
+    <button id="sidebar-toggle" title="Sidebar umschalten">
+        <i class="fas fa-bars"></i>
+    </button>
+
     <div id="sidebar">
         <div class="sidebar-header">
             <h2><i class="fas fa-solar-panel"></i> Solar Analyse</h2>
@@ -127,14 +183,35 @@
  crossorigin=""></script>
 
 <script>
-    // Initialize Map
+    
+    // START NEUE JAVASCRIPT LOGIK FÜR RESPONSIVENESS
+    
+    // Funktion zum Umschalten der Sidebar
+    function toggleSidebar() {
+        var sidebar = document.getElementById('sidebar');
+        var icon = document.getElementById('sidebar-toggle').querySelector('i');
+        
+        sidebar.classList.toggle('open');
+        
+        // Icon ändern
+        if (sidebar.classList.contains('open')) {
+            icon.classList.replace('fa-bars', 'fa-times'); // Zu Schließen-Icon wechseln
+        } else {
+            icon.classList.replace('fa-times', 'fa-bars'); // Zu Menü-Icon wechseln
+        }
+    }
+    
+    // Event Listener für den Button
+    document.getElementById('sidebar-toggle').addEventListener('click', toggleSidebar);
+
+    // Initialisierung des Maps
     var map = L.map('map').setView([49.044, 9.197], 14);
 
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
         attribution: '&copy; OpenStreetMap contributors'
     }).addTo(map);
 
-    // Data from Python
+    // Data from Python 
     var trafos = [{"id": "03TS0001", "lat": 49.041478013975414, "lon": 9.193368795251228, "panels_in_range": 10, "score": 11.111111111111116, "color": "#ff3800ff"}, {"id": "03TS0008", "lat": 49.04521152003828, "lon": 9.192621327124252, "panels_in_range": 5, "score": 66.66666666666667, "color": "#aad500ff"}, {"id": "03TS0013", "lat": 49.04400890616599, "lon": 9.197936614288833, "panels_in_range": 5, "score": 66.66666666666667, "color": "#aad500ff"}, {"id": "03TS0021", "lat": 49.042107918011936, "lon": 9.19712324946646, "panels_in_range": 11, "score": 0.0, "color": "#ff0000ff"}, {"id": "03TS0023", "lat": 49.04262581068064, "lon": 9.203027866778873, "panels_in_range": 2, "score": 100.0, "color": "#008000ff"}, {"id": "03TS0026", "lat": 49.04667746829518, "lon": 9.197129953353837, "panels_in_range": 3, "score": 88.88888888888889, "color": "#389c00ff"}, {"id": "03TS0030", "lat": 49.042104535405734, "lon": 9.20003015594376, "panels_in_range": 9, "score": 22.22222222222222, "color": "#ff7100ff"}, {"id": "03TS0031", "lat": 49.046724232462914, "lon": 9.196240081830293, "panels_in_range": 5, "score": 66.66666666666667, "color": "#aad500ff"}];
     var panels = [{"id": 0, "lat": 49.04373695792584, "lon": 9.193292733453053}, {"id": 1, "lat": 49.04177495342609, "lon": 9.199427251414642}, {"id": 2, "lat": 49.04179537712595, "lon": 9.19942876536927}, {"id": 3, "lat": 49.04441288562365, "lon": 9.200935453080742}, {"id": 4, "lat": 49.04866995833716, "lon": 9.193835836231719}, {"id": 5, "lat": 49.04408246014071, "lon": 9.199699134477433}, {"id": 6, "lat": 49.041757589810715, "lon": 9.196735521928169}, {"id": 7, "lat": 49.04190135611931, "lon": 9.195127713600446}, {"id": 8, "lat": 49.041668456771525, "lon": 9.194279583861778}, {"id": 9, "lat": 49.04174699624677, "lon": 9.194267190945787}, {"id": 10, "lat": 49.042375228547996, "lon": 9.19920930634763}, {"id": 11, "lat": 49.04599268097206, "lon": 9.197635244450051}, {"id": 12, "lat": 49.041936338117615, "lon": 9.195073154616779}, {"id": 13, "lat": 49.042432354018906, "lon": 9.200674355910358}, {"id": 14, "lat": 49.04357223073323, "lon": 9.197496502195131}, {"id": 15, "lat": 49.042495530541196, "lon": 9.19288772588457}, {"id": 16, "lat": 49.04477975187331, "lon": 9.195302920672756}, {"id": 17, "lat": 49.042490439185535, "lon": 9.192782911035351}, {"id": 18, "lat": 49.04275955847102, "lon": 9.194249487353689}, {"id": 19, "lat": 49.04238651524895, "lon": 9.199024769230725}, {"id": 20, "lat": 49.042371497776614, "lon": 9.200504625878361}, {"id": 21, "lat": 49.04435535054973, "lon": 9.197708122108047}, {"id": 22, "lat": 49.04232792574771, "lon": 9.19921238019322}, {"id": 23, "lat": 49.045914229015814, "lon": 9.197521173465455}, {"id": 24, "lat": 49.04462855348626, "lon": 9.194832874121415}, {"id": 25, "lat": 49.04818912906185, "lon": 9.192722842175739}, {"id": 26, "lat": 49.04275497975782, "lon": 9.193982236764368}, {"id": 27, "lat": 49.042752979824265, "lon": 9.193982236764368}, {"id": 28, "lat": 49.04664308334859, "lon": 9.19365390146618}, {"id": 29, "lat": 49.04462855348626, "lon": 9.194832874121415}, {"id": 30, "lat": 49.04838896811754, "lon": 9.191638857912093}, {"id": 31, "lat": 49.04644206880403, "lon": 9.19402451577088}, {"id": 32, "lat": 49.041750361950186, "lon": 9.196441535619972}, {"id": 33, "lat": 49.04376211268634, "lon": 9.195720015288854}, {"id": 34, "lat": 49.04170648046952, "lon": 9.196645480776011}, {"id": 35, "lat": 49.04227422143816, "lon": 9.200173253489558}, {"id": 36, "lat": 49.04185149249918, "lon": 9.200045125336398}, {"id": 37, "lat": 49.042141498184925, "lon": 9.19317027258078}, {"id": 38, "lat": 49.04595890844444, "lon": 9.197518323665136}, {"id": 39, "lat": 49.04917984554982, "lon": 9.195333880226551}];
 
@@ -185,6 +262,12 @@
             </div>
         `;
         sidebar.innerHTML = html;
+        
+        // Mobile: Sidebar automatisch öffnen, wenn ein Trafo angeklickt wird
+        if (window.innerWidth <= 768) {
+            document.getElementById('sidebar').classList.add('open');
+            document.getElementById('sidebar-toggle').querySelector('i').classList.replace('fa-bars', 'fa-times');
+        }
     }
 
     // Add Trafos
@@ -239,4 +322,3 @@
 </script>
 </body>
 </html>
-    
